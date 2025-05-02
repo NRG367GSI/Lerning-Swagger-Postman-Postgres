@@ -12,9 +12,8 @@ import java.util.List;
 @RequestMapping("/faculty")
 public class FacultyController {
 
-    FacultyService facultyService;
+    private final FacultyService facultyService;
 
-    @Autowired
     public FacultyController(FacultyService facultyService) {
         this.facultyService = facultyService;
     }
@@ -35,13 +34,10 @@ public class FacultyController {
         return ResponseEntity.ok(faculty);
     }
 
-    @PutMapping("/updateFaculty/{facultyId}")
-    public ResponseEntity<Faculty> updateFaculty(Faculty faculty) {
-        Faculty updateFaculty = facultyService.updateFaculty(faculty);
-        if (updateFaculty == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(updateFaculty);
+    @PutMapping("/{id}")
+    public ResponseEntity<Faculty> updateFaculty(@PathVariable Long id, @RequestBody Faculty faculty) {
+        Faculty updatedFaculty = facultyService.updateFaculty(id, faculty);
+        return ResponseEntity.ok(updatedFaculty);
     }
 
     @DeleteMapping("/deleteFaculty")

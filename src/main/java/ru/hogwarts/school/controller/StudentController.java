@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.StudentService;
 
@@ -22,15 +23,14 @@ public class StudentController {
 
     @PostMapping("/createStudent")
     public ResponseEntity<Student> createStudent(@RequestBody Student student) {
-        System.out.println("Received student: " + student); // Временное логирование
         Student createdStudent = studentService.createStudent(student);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdStudent);
     }
 
     @GetMapping("/getStudent/{studentId}")
     public ResponseEntity<Student> getStudent(@PathVariable Long studentId) {
-        Optional<Student> student = studentService.getStudent(studentId);
-        return student.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        Student student = studentService.getStudent(studentId);
+        return ResponseEntity.ok(student);
     }
 
     @PutMapping("/updateStudent/{studentId}")

@@ -2,6 +2,7 @@ package ru.hogwarts.school.service;
 
 
 import org.springframework.stereotype.Service;
+import ru.hogwarts.school.exception.FacultyNotFoundException;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.repository.FacultyRepository;
 
@@ -10,7 +11,7 @@ import java.util.List;
 @Service
 public class FacultyService {
 
-    FacultyRepository facultyRepository;
+    private final FacultyRepository facultyRepository;
 
     public FacultyService(FacultyRepository facultyRepository) {
         this.facultyRepository = facultyRepository;
@@ -22,14 +23,16 @@ public class FacultyService {
 
     public Faculty getFaculty(Long facultyId) {
         return facultyRepository.findById(facultyId)
-                .orElse(null);
+                .orElseThrow(() -> new FacultyNotFoundException("Факультет с ID " + facultyId + " не найден"));
     }
 
-    public Faculty updateFaculty(Faculty faculty) {
-        if (facultyRepository.existsById(faculty.getFacultyId())) {
-            return facultyRepository.save(faculty);
-        }
-        return null;
+    public Faculty updateFaculty(Long id, Faculty faculty) {
+        return facultyRepository.findById(id)
+                .map(existingFaculty -> {
+                    faculty.setFacultyId(id); // Ensure the ID is set for update
+                    return facultyRepository.save(faculty);
+                })
+                .orElseThrow(() -> new FacultyNotFoundException("Факультет с ID " + id + " не найден для обновления"));
     }
 
     public void deleteFaculty(Long facultyId) {
