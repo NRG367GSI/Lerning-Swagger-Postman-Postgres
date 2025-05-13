@@ -2,20 +2,23 @@ package ru.hogwarts.school.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.hogwarts.school.exception.StudentNotFoundException;
+import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class StudentService {
     private final StudentRepository studentRepository;
 
     @Autowired
-    public StudentService(StudentRepository studentRepository1) {
-        this.studentRepository = studentRepository1;
+    public StudentService(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
     }
 
     public Student createStudent(Student student) {
@@ -46,5 +49,31 @@ public class StudentService {
 
     public List<Student> getStudentsByAge(int age) {
         return studentRepository.findByAge(age);
+    }
+
+    public List<Student> findByStudentAgeBeatvin(int ageMin, int ageMax) {
+        if (ageMin < ageMax) {
+            return studentRepository.findByAgeBetween(ageMin, ageMax);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Faculty> getStudentsFaculty(Long studentId) {
+        Optional<Student> studentOptional = studentRepository.findById(studentId);
+        return studentOptional.map(Student::getFaculty);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Faculty> getStudentFacultyId(Long studentId) {
+        return studentRepository.findById(studentId)
+                .map(student -> student.getFaculty() != null ? student.getFaculty() : null);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<List<Student>> getStudentsByFaculty(Long studentId) {
+        return studentRepository.findById(studentId)
+                .map(student -> student.getFaculty() != null ? student.getFaculty().getStudents() : null);
     }
 }

@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.hogwarts.school.exception.InvalidAgeRangeException;
 import ru.hogwarts.school.exception.StudentNotFoundException;
+import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.StudentService;
 
@@ -55,5 +57,25 @@ public class StudentController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(students);
+    }
+
+    @GetMapping("/age/between")
+    public ResponseEntity<List<Student>> getStudentsByAgeBetween(
+            @RequestParam int minAge,
+            @RequestParam int maxAge) {
+
+        if (minAge >= maxAge) {
+            throw new InvalidAgeRangeException("Минимальный возраст должен быть меньше максимального.");
+        }
+
+        List<Student> students = studentService.findByStudentAgeBeatvin(minAge, maxAge);
+        return ResponseEntity.ok(students);
+    }
+
+    @GetMapping("/{studentId}/faculty")
+    public ResponseEntity<Faculty> getStudentFaculty(@PathVariable Long studentId) {
+        return studentService.getStudentsFaculty(studentId)
+                .map(faculty -> new ResponseEntity<>(faculty, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 }
