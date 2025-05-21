@@ -63,11 +63,6 @@ public class StudentController {
     public ResponseEntity<List<Student>> getStudentsByAgeBetween(
             @RequestParam int minAge,
             @RequestParam int maxAge) {
-
-        if (minAge >= maxAge) {
-            throw new InvalidAgeRangeException("Минимальный возраст должен быть меньше максимального.");
-        }
-
         List<Student> students = studentService.findByStudentAgeBeatvin(minAge, maxAge);
         return ResponseEntity.ok(students);
     }

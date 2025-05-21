@@ -1,26 +1,37 @@
 package ru.hogwarts.school.model;
 
+import jakarta.persistence.*;
+
 import java.util.Arrays;
 import java.util.Objects;
 
+@Entity
 public class Avatar {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    String filePath;
-    long fileSize;
-    String mediaType;
-    byte[] data;
+
+    @OneToOne
+    @JoinColumn(name = "student_id")
     Student student;
+
+    String filePath;
+    String mediaType;
+    long fileSize;
+
+    @Lob
+    byte[] data;
 
     public Avatar() {
     }
 
-    public Avatar(String filePath, long fileSize, String mediaType, byte[] data, Student student, Long id) {
-        this.filePath = filePath;
-        this.fileSize = fileSize;
-        this.mediaType = mediaType;
-        this.data = data;
-        this.student = student;
+    public Avatar(Long id, Student student, String filePath, String mediaType, long fileSize, byte[] data) {
         this.id = id;
+        this.student = student;
+        this.filePath = filePath;
+        this.mediaType = mediaType;
+        this.fileSize = fileSize;
+        this.data = data;
     }
 
     public Long getId() {

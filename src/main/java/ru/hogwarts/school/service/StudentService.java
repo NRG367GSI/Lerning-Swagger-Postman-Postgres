@@ -3,6 +3,7 @@ package ru.hogwarts.school.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.hogwarts.school.exception.InvalidAgeRangeException;
 import ru.hogwarts.school.exception.StudentNotFoundException;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
@@ -52,11 +53,10 @@ public class StudentService {
     }
 
     public List<Student> findByStudentAgeBeatvin(int ageMin, int ageMax) {
-        if (ageMin < ageMax) {
-            return studentRepository.findByAgeBetween(ageMin, ageMax);
-        } else {
-            return Collections.emptyList();
+        if (ageMin >= ageMax) {
+            throw new InvalidAgeRangeException("Минимальный возраст должен быть меньше максимального.");
         }
+        return studentRepository.findByAgeBetween(ageMin, ageMax);
     }
 
     @Transactional(readOnly = true)
