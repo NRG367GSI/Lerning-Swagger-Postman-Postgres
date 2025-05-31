@@ -15,15 +15,14 @@ public class Faculty {
     private Long facultyId;
     private String name;
     private  String color;
-    private Long id;
 
     @OneToMany(mappedBy = "faculty")
     private List<Student> students;
 
     public Faculty() {}
 
-    public Faculty(Long id, String name, String color) {
-        this.facultyId = id;
+    public Faculty(Long facultyId, String name, String color) {
+        this.facultyId = facultyId;
         this.name = name;
         this.color = color;
     }

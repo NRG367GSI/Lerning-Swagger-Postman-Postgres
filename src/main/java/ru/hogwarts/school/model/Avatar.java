@@ -16,6 +16,7 @@ public class Avatar {
     Student student;
 
     String filePath;
+    String fileName;
     String mediaType;
     long fileSize;
 
@@ -29,6 +30,7 @@ public class Avatar {
         this.id = id;
         this.student = student;
         this.filePath = filePath;
+        this.fileName = fileName;
         this.mediaType = mediaType;
         this.fileSize = fileSize;
         this.data = data;
@@ -82,12 +84,21 @@ public class Avatar {
         this.student = student;
     }
 
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Avatar avatar = (Avatar) o;
         return fileSize == avatar.fileSize && Objects.equals(id, avatar.id)
                 && Objects.equals(filePath, avatar.filePath)
+                && Objects.equals(fileName, avatar.fileName)
                 && Objects.equals(mediaType, avatar.mediaType)
                 && Objects.deepEquals(data, avatar.data)
                 && Objects.equals(student, avatar.student);
@@ -95,7 +106,7 @@ public class Avatar {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, filePath, fileSize, mediaType, Arrays.hashCode(data), student);
+        return Objects.hash(id, filePath, fileName, fileSize, mediaType, Arrays.hashCode(data), student);
     }
 
     @Override
@@ -103,6 +114,7 @@ public class Avatar {
         return "Avatar{" +
                 "id=" + id +
                 ", filePath='" + filePath + '\'' +
+                ", fileName='" + fileName + '\'' +
                 ", fileSize=" + fileSize +
                 ", mediaType='" + mediaType + '\'' +
                 ", data=" + Arrays.toString(data) +

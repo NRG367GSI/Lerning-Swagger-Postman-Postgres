@@ -54,10 +54,6 @@ public class FacultyService {
         return facultyRepository.findByNameContainingIgnoreCase(name);
     }
 
-    public List<Faculty> searchFacultiesByColor(String color) {
-        return facultyRepository.findByColor(color);
-    }
-
     public Optional<List<Student>> getStudentsByFacultyId(Long facultyId) {
         return facultyRepository.findById(facultyId)
                 .map(Faculty::getStudents);

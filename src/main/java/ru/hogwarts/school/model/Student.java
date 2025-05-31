@@ -20,6 +20,9 @@ import java.util.Objects;
         @JoinColumn(name = "facultyId")
         private Faculty faculty;
 
+        @OneToOne(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true) // Добавляем связь
+        private Avatar avatar;
+
         public Student() {}
 
         public Student(Long id, String name, int age) {
@@ -58,6 +61,17 @@ import java.util.Objects;
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public Avatar getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(Avatar avatar) {
+        this.avatar = avatar;
+        if (avatar != null) {
+            avatar.setStudent(this);
+        }
     }
 
     @Override

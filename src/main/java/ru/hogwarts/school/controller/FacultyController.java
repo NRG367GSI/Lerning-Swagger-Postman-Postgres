@@ -1,5 +1,6 @@
 package ru.hogwarts.school.controller;
 
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,6 @@ public class FacultyController {
         this.facultyService = facultyService;
     }
 
-
     @PostMapping("/createdFaculty")
     public ResponseEntity<Faculty> createdFaculty(@RequestBody Faculty faculty) {
         Faculty createdFaculty = facultyService.createFaculty(faculty);
@@ -28,7 +28,7 @@ public class FacultyController {
     }
 
     @GetMapping("/getFaculty/{facultyId}")
-    public ResponseEntity<Faculty> getFaculty(Long facultyId) {
+    public ResponseEntity<Faculty> getFaculty(@PathVariable Long facultyId) { // Добавляем @PathVariable
         Faculty faculty = facultyService.getFaculty(facultyId);
         if (faculty == null) {
             return ResponseEntity.notFound().build();
@@ -42,8 +42,8 @@ public class FacultyController {
         return ResponseEntity.ok(updatedFaculty);
     }
 
-    @DeleteMapping("/deleteFaculty")
-    public ResponseEntity<Faculty> deleteFaculty(Long facultyId) {
+    @DeleteMapping("/deleteFaculty/{facultyId}") // Изменяем путь для ясности
+    public ResponseEntity<Faculty> deleteFaculty(@PathVariable Long facultyId) { // Добавляем @PathVariable
         facultyService.deleteFaculty(facultyId);
         return ResponseEntity.noContent().build();
     }
@@ -60,12 +60,13 @@ public class FacultyController {
 
     @GetMapping("/searchFacultyByName")
     public ResponseEntity<List<Faculty>> searchFacultiesByName(@RequestParam String name) {
-        return  ResponseEntity.ok(facultyService.searchFacultiesByName(name));
+        return ResponseEntity.ok(facultyService.searchFacultiesByName(name));
     }
 
     @GetMapping("/searchFacultyByColor")
     public ResponseEntity<List<Faculty>> searchFacultiesByColor(@RequestParam String color) {
-        return ResponseEntity.ok(facultyService.searchFacultiesByColor(color));
+        // Здесь можно использовать getFacultysByColor, так как это дубликат
+        return ResponseEntity.ok(facultyService.getFacultysByColor(color));
     }
 
     @GetMapping("/{facultyId}/students")
