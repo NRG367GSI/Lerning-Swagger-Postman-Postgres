@@ -30,95 +30,90 @@ public class Avatar {
         this.id = id;
         this.student = student;
         this.filePath = filePath;
-        this.fileName = fileName;
         this.mediaType = mediaType;
         this.fileSize = fileSize;
         this.data = data;
     }
 
     public Long getId() {
-        return id;
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public long getFileSize() {
-        return fileSize;
-    }
-
-    public String getMediaType() {
-        return mediaType;
-    }
-
-    public byte[] getData() {
-        return data;
+        return this.id;
     }
 
     public Student getStudent() {
         return student;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-    public void setFileSize(long fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
-    }
-
-    public void setData(byte[] data) {
-        this.data = data;
-    }
-
-    public void setStudent(Student student) {
-        this.student = student;
+    public String getFilePath() {
+        return filePath;
     }
 
     public String getFileName() {
         return fileName;
     }
 
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
 
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
+    }
+
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+
     @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Avatar avatar = (Avatar) o;
-        return fileSize == avatar.fileSize && Objects.equals(id, avatar.id)
-                && Objects.equals(filePath, avatar.filePath)
-                && Objects.equals(fileName, avatar.fileName)
-                && Objects.equals(mediaType, avatar.mediaType)
-                && Objects.deepEquals(data, avatar.data)
-                && Objects.equals(student, avatar.student);
+    public boolean equals(Object object) {
+        if (this == object) return true;
+        if (object == null || getClass() != object.getClass()) return false;
+        Avatar avatar = (Avatar) object;
+        return fileSize == avatar.fileSize && Objects.equals(id, avatar.id) && Objects.equals(student, avatar.student) && Objects.equals(filePath, avatar.filePath) && Objects.equals(fileName, avatar.fileName) && Objects.equals(mediaType, avatar.mediaType) && Objects.deepEquals(data, avatar.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, filePath, fileName, fileSize, mediaType, Arrays.hashCode(data), student);
+        return Objects.hash(id, student, filePath, fileName, mediaType, fileSize, Arrays.hashCode(data));
     }
 
     @Override
     public String toString() {
         return "Avatar{" +
                 "id=" + id +
+                ", student=" + student +
                 ", filePath='" + filePath + '\'' +
                 ", fileName='" + fileName + '\'' +
-                ", fileSize=" + fileSize +
                 ", mediaType='" + mediaType + '\'' +
+                ", fileSize=" + fileSize +
                 ", data=" + Arrays.toString(data) +
-                ", student=" + student +
                 '}';
     }
 }

@@ -1,27 +1,31 @@
+package ru.hogwarts.school.service;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.imgscalr.Scalr;
 import ru.hogwarts.school.model.Avatar;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.AvatarRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
+import ru.hogwarts.school.exception.StudentNotFoundException;
+
+import jakarta.annotation.PostConstruct;
+
+
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Optional;
-import java.util.UUID;
 
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.WRITE;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import java.util.Optional;
+
+import static java.nio.file.StandardOpenOption.*;
+
 
 @Service
 @Transactional
@@ -42,109 +46,114 @@ public class AvatarService {
     public AvatarService(AvatarRepository avatarRepository, StudentRepository studentRepository) {
         this.avatarRepository = avatarRepository;
         this.studentRepository = studentRepository;
+    }
 
+    @PostConstruct
+    public void initAvatarDirectory() {
+        if (avatarsDir == null || avatarsDir.trim().isEmpty()) {
+            throw new IllegalArgumentException("Свойство 'path.to.avatars.folder' должно быть указано в application.properties.");
+        }
         try {
-            Files.createDirectories(Paths.get(avatarsDir));
+            Path avatarFolderPath = Path.of(avatarsDir);
+            Files.createDirectories(avatarFolderPath);
         } catch (IOException e) {
-            System.err.println("Не удалось создать директорию для загрузки аватаров: " + avatarsDir + " - " + e.getMessage());
+            throw new RuntimeException("Не удалось инициализировать директорию для аватаров по пути: " + avatarsDir, e);
         }
     }
 
-    public Avatar uploadStudentAvatar(Long studentId, MultipartFile file) throws IOException {
 
+    public void uploadStudentAvatar(Long studentId, MultipartFile file) throws IOException {
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
+                .orElseThrow(() -> new StudentNotFoundException("Student not found with ID: " + studentId));
 
-        Avatar avatar = findOrCreateAvatarEntity(studentId, student);
+        Optional<Avatar> optionalAvatar = avatarRepository.findByAvatarId(studentId);
 
-        deleteOldAvatarFile(avatar.getFilePath());
-
-        Path newFullSizeFilePath = saveFullSizeAvatarFile(file);
-
-        byte[] miniatureData = generateAvatarMiniature(file);
-
-        updateAvatarEntityFields(avatar, file, newFullSizeFilePath, miniatureData);
-
-        return avatarRepository.save(avatar);
-    }
-
-    private Avatar findOrCreateAvatarEntity(Long studentId, Student student) {
-        Optional<Avatar> existingAvatarOpt = avatarRepository.findByStudentId(studentId);
-        Avatar avatar;
-        if (existingAvatarOpt.isPresent()) {
-            avatar = existingAvatarOpt.get();
-        } else {
-            avatar = new Avatar();
-            avatar.setStudent(student);
-        }
-        return avatar;
-    }
-
-    private void deleteOldAvatarFile(String filePath) {
-        if (filePath != null && !filePath.isEmpty()) {
-            Path oldAvatarPath = Paths.get(filePath);
-            try {
-                boolean deleted = Files.deleteIfExists(oldAvatarPath);
-                if (deleted) {
-                    System.out.println("Старый полноразмерный аватар успешно удален с диска: " + oldAvatarPath);
-                } else {
-                    System.out.println("Старый полноразмерный аватар не найден на диске для удаления (возможно, уже удален): " + oldAvatarPath);
-                }
-            } catch (IOException e) {
-                System.err.println("Ошибка при удалении старого полноразмерного аватара " + oldAvatarPath + " с диска: " + e.getMessage());
-            }
-        }
-    }
-
-    private Path saveFullSizeAvatarFile(MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();
+        String nameNewAvatar = "";
+        if (originalFilename != null) {
+            nameNewAvatar = createNewName(originalFilename, studentId);
+        }
+        Path pathNewFile = Path.of(avatarsDir, nameNewAvatar);
+
+
+
+        if (optionalAvatar.isPresent()) {
+            Avatar oldAvatar = optionalAvatar.get();
+            String pathOldAvatar = oldAvatar.getFilePath();
+            Files.deleteIfExists(Path.of(pathOldAvatar));
+            saveAvatarFile(pathNewFile, file);
+            oldAvatar.setFileName(nameNewAvatar);
+            oldAvatar.setFileSize(file.getSize());
+            oldAvatar.setData(createThumbnail(avatarMiniatureWidth, avatarMiniatureHeight, file));
+            oldAvatar.setFilePath(pathNewFile.toString());
+            oldAvatar.setMediaType(file.getContentType());
+            avatarRepository.save(oldAvatar);
+        } else {
+            Avatar newAvatar = new Avatar();
+            saveAvatarFile(pathNewFile, file);
+            newAvatar.setFileName(nameNewAvatar);
+            newAvatar.setFileSize(file.getSize());
+            newAvatar.setData(createThumbnail(avatarMiniatureWidth, avatarMiniatureHeight, file));
+            newAvatar.setFilePath(pathNewFile.toString());
+            newAvatar.setMediaType(file.getContentType());
+            newAvatar.setStudent(student);
+            avatarRepository.save(newAvatar);
+        }
+
+
+    }
+
+    public void saveAvatarFile(Path path, MultipartFile avatarFile) throws IOException {
+        try (
+                InputStream is = avatarFile.getInputStream();
+                OutputStream os = Files.newOutputStream(path, CREATE, WRITE);
+                BufferedInputStream bis = new BufferedInputStream(is, 1024);
+                BufferedOutputStream bos = new BufferedOutputStream(os, 1024);
+        ) {
+            bis.transferTo(bos);
+        }
+    }
+
+    public String createNewName(String originalFileName, Long id) {
         String fileExtension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        int dotIndex = originalFileName.lastIndexOf(".");
+        if (dotIndex > 0 && dotIndex < originalFileName.length() - 1) {
+            fileExtension = originalFileName.substring(dotIndex);
         }
-        String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
-        Path newFilePath = Paths.get(avatarsDir, uniqueFileName);
 
-        try (var inputStream = file.getInputStream();
-             var outputStream = Files.newOutputStream(newFilePath, CREATE, WRITE, TRUNCATE_EXISTING)) {
-            inputStream.transferTo(outputStream);
-            System.out.println("Новый полноразмерный аватар успешно сохранен на диск: " + newFilePath);
-            return newFilePath;
-        } catch (IOException e) {
-            System.err.println("Ошибка при сохранении нового полноразмерного аватара на диск: " + newFilePath + " - " + e.getMessage());
-            throw e;
-        }
+        return id.toString() + fileExtension;
     }
 
-    private byte[] generateAvatarMiniature(MultipartFile originalFile) throws IOException {
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(originalFile.getBytes())) {
-            BufferedImage originalImage = ImageIO.read(bais);
-            if (originalImage == null) {
-                System.err.println("Ошибка: Загруженный файл не является распознаваемым изображением.");
-                throw new IOException("Загруженный файл не является распознаваемым изображением.");
-            }
+    public byte[] createThumbnail(int thumbnailWidth, int thumbnailHeight, MultipartFile imageFile) throws IOException {
+        InputStream originalImageStream = imageFile.getInputStream();
+        BufferedImage originalImage = ImageIO.read(originalImageStream);
 
-            BufferedImage resizedImage = Scalr.resize(originalImage, Scalr.Method.AUTOMATIC, Scalr.Mode.FIT_TO_WIDTH, avatarMiniatureWidth, avatarMiniatureHeight, Scalr.OP_ANTIALIAS);
+        double originalWidth = originalImage.getWidth();
+        double originalHeight = originalImage.getHeight();
 
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                String format = originalFile.getContentType().startsWith("image/") ?
-                        originalFile.getContentType().substring(originalFile.getContentType().indexOf('/') + 1) : "png";
+        double scale = Math.min(thumbnailWidth/originalWidth, thumbnailHeight/originalHeight);
 
-                ImageIO.write(resizedImage, format, baos);
-                System.out.println("Миниатюра аватара успешно сгенерирована.");
-                return baos.toByteArray();
-            }
-        } catch (IOException e) {
-            System.err.println("Ошибка при генерации миниатюры аватара: " + e.getMessage());
-            throw e;
-        }
+        int scaleWidth = (int) (originalWidth * scale);
+        int scaleHeight = (int) (originalHeight * scale);
+
+        BufferedImage thumbnail = new BufferedImage(scaleWidth, scaleHeight, BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D paintingImageObject = thumbnail.createGraphics();
+
+        paintingImageObject.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        paintingImageObject.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        paintingImageObject.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        paintingImageObject.drawImage(originalImage, 0, 0, scaleWidth, scaleHeight, null);
+        paintingImageObject.dispose();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(thumbnail, "jpg", baos);
+        return baos.toByteArray();
     }
 
-    private void updateAvatarEntityFields(Avatar avatar, MultipartFile file, Path newFullSizeFilePath, byte[] miniatureData) {
-        avatar.setFilePath(newFullSizeFilePath.toString());
-        avatar.setFileName(file.getOriginalFilename());
-        avatar.setFileSize(file.getSize());
-        avatar.setMediaType(file.getContentType());
-        avatar.setData(miniatureData);
-    }
+
+
+
+
 }
