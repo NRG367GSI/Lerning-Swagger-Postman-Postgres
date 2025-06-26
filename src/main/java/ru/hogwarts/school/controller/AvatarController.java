@@ -21,42 +21,28 @@ public class AvatarController {
         this.avatarService = avatarService;
     }
 
-    @PostMapping(value = "/{studentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadAvatar(@PathVariable Long studentId,
-                                               @RequestParam MultipartFile avatar) {
-        try {
-            avatarService.uploadStudentAvatar(studentId, avatar);
-            return ResponseEntity.ok("Аватар успешно загружен для студента ID: " + studentId);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Ошибка при загрузке аватара: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(e.getMessage());
-        }
+    @PostMapping(value = "uploadAvatar/{studentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadAvatar(@PathVariable Long studentId, @RequestParam MultipartFile multipartFile) throws IOException {
+        avatarService.uploadStudentAvatar(studentId, multipartFile);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/{studentId}/from-db")
-    public ResponseEntity<byte[]> getAvatarFromDb(@PathVariable Long studentId) {
-        Avatar avatar = avatarService.getAvatarByStudentId(studentId);
+    @GetMapping(value = "/{studentId}/miniature")
+    public ResponseEntity<byte[]> getMiniature(@PathVariable Long studentId) {
+        byte[] miniatureBytes = avatarService.getAvatarMiniature(studentId);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(avatar.getMediaType()));
-        headers.setContentLength(avatar.getData().length);
-        return new ResponseEntity<>(avatar.getData(), headers, HttpStatus.OK);
+        headers.setContentType(avatarService.getMediaType(studentId));
+        headers.setContentLength(miniatureBytes.length);
+        return new ResponseEntity<>(miniatureBytes, headers, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/{avatarId}/from-file")
-    public ResponseEntity<byte[]> getAvatarFromFile(@PathVariable Long avatarId) {
-        try {
-            Avatar avatar = avatarService.getAvatarDataFromFile(avatarId);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(avatar.getMediaType()));
-            headers.setContentLength(avatar.getData().length);
-            return new ResponseEntity<>(avatar.getData(), headers, HttpStatus.OK);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @GetMapping(value = "/{studentId}/avatarPicture")
+    public ResponseEntity<byte[]> getAvatarPicture(@PathVariable Long studentId) throws IOException {
+        byte[] miniatureBytes = avatarService.getAvatarFile(studentId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(avatarService.getMediaType(studentId));
+        headers.setContentLength(miniatureBytes.length);
+        return new ResponseEntity<>(miniatureBytes, headers, HttpStatus.OK);
     }
 }

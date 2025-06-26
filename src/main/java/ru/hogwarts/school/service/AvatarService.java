@@ -1,9 +1,11 @@
 package ru.hogwarts.school.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import ru.hogwarts.school.exception.AvatarNotFoundException;
 import ru.hogwarts.school.model.Avatar;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.AvatarRepository;
@@ -150,6 +152,31 @@ public class AvatarService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(thumbnail, "jpg", baos);
         return baos.toByteArray();
+    }
+
+    public byte[] getAvatarMiniature(Long studentId) {
+        return avatarRepository.findByAvatarId(studentId)
+                .orElseThrow(() -> new StudentNotFoundException("Avatar not found with ID: " + studentId))
+                .getData();
+    }
+
+    public byte[] getAvatarFile(Long studentId) throws IOException {
+        String filePath = avatarRepository.findByAvatarId(studentId)
+                .orElseThrow(() -> new StudentNotFoundException("Avatar not found with ID: " + studentId))
+                .getFilePath();
+
+        Path pathToFile = Path.of(filePath);
+        if (Files.notExists(pathToFile)) {
+            throw new FileNotFoundException("Avatar file not found on disk: " + filePath);
+        }
+
+        return Files.readAllBytes(pathToFile);
+    }
+
+    public MediaType getMediaType(Long studentId) {
+        String typeMiniature =  avatarRepository.findByAvatarId(studentId)
+                .orElseThrow(() -> new AvatarNotFoundException("Student not found with ID: " + studentId)).getMediaType();
+        return MediaType.parseMediaType(typeMiniature);
     }
 
 

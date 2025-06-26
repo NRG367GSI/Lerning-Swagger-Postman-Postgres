@@ -8,8 +8,7 @@ import java.util.Objects;
 @Entity
 public class Avatar {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    Long avatarId;
 
     @OneToOne
     @JoinColumn(name = "student_id")
@@ -26,8 +25,8 @@ public class Avatar {
     public Avatar() {
     }
 
-    public Avatar(Long id, Student student, String filePath, String mediaType, long fileSize, byte[] data) {
-        this.id = id;
+    public Avatar(Long avatarId, Student student, String filePath, String mediaType, long fileSize, byte[] data) {
+        this.avatarId = avatarId;
         this.student = student;
         this.filePath = filePath;
         this.mediaType = mediaType;
@@ -35,8 +34,8 @@ public class Avatar {
         this.data = data;
     }
 
-    public Long getId() {
-        return this.id;
+    public Long getAvatarId() {
+        return this.avatarId;
     }
 
     public Student getStudent() {
@@ -63,8 +62,8 @@ public class Avatar {
         return data;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setAvatarId(Long avatarId) {
+        this.avatarId = avatarId;
     }
 
     public void setStudent(Student student) {
@@ -96,18 +95,18 @@ public class Avatar {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         Avatar avatar = (Avatar) object;
-        return fileSize == avatar.fileSize && Objects.equals(id, avatar.id) && Objects.equals(student, avatar.student) && Objects.equals(filePath, avatar.filePath) && Objects.equals(fileName, avatar.fileName) && Objects.equals(mediaType, avatar.mediaType) && Objects.deepEquals(data, avatar.data);
+        return fileSize == avatar.fileSize && Objects.equals(avatarId, avatar.avatarId) && Objects.equals(student, avatar.student) && Objects.equals(filePath, avatar.filePath) && Objects.equals(fileName, avatar.fileName) && Objects.equals(mediaType, avatar.mediaType) && Objects.deepEquals(data, avatar.data);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, student, filePath, fileName, mediaType, fileSize, Arrays.hashCode(data));
+        return Objects.hash(avatarId, student, filePath, fileName, mediaType, fileSize, Arrays.hashCode(data));
     }
 
     @Override
     public String toString() {
         return "Avatar{" +
-                "id=" + id +
+                "id=" + avatarId +
                 ", student=" + student +
                 ", filePath='" + filePath + '\'' +
                 ", fileName='" + fileName + '\'' +
