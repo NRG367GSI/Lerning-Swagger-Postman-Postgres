@@ -73,4 +73,14 @@ public class StudentController {
                 .map(faculty -> new ResponseEntity<>(faculty, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
+
+    @GetMapping("/getFullStudent")
+    public ResponseEntity<List<Student>> getAllStudent() {
+        return new ResponseEntity<>(studentService.getFullStudent(), HttpStatus.OK);
+    }
+
+    @GetMapping("/getFullStudentId")
+    public ResponseEntity<List<Long>> getAllStudentId() {
+        return new ResponseEntity<>(studentService.getFullIdStudent(), HttpStatus.OK);
+    }
 }

@@ -12,6 +12,7 @@ public class Avatar {
 
     @OneToOne
     @JoinColumn(name = "student_id")
+    @MapsId
     Student student;
 
     String filePath;
