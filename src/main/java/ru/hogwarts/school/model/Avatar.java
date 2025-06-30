@@ -8,26 +8,25 @@ import java.util.Objects;
 @Entity
 public class Avatar {
     @Id
-    Long avatarId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long avatarId;
 
     @OneToOne
-    @JoinColumn(name = "student_id")
-    @MapsId
-    Student student;
+    @JoinColumn(name = "student_id", referencedColumnName = "id", unique = true)
+    private Student student;
 
-    String filePath;
-    String fileName;
-    String mediaType;
+    private String filePath;
+    private String fileName;
+    private String mediaType;
     long fileSize;
 
     @Lob
-    byte[] data;
+    private byte[] data;
 
     public Avatar() {
     }
 
-    public Avatar(Long avatarId, Student student, String filePath, String mediaType, long fileSize, byte[] data) {
-        this.avatarId = avatarId;
+    public Avatar(Student student, String filePath, String mediaType, long fileSize, byte[] data) {
         this.student = student;
         this.filePath = filePath;
         this.mediaType = mediaType;

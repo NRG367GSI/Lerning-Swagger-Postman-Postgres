@@ -24,6 +24,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -68,7 +69,7 @@ public class AvatarService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new StudentNotFoundException("Student not found with ID: " + studentId));
 
-        Optional<Avatar> optionalAvatar = avatarRepository.findByAvatarId(studentId);
+        Optional<Avatar> optionalAvatar = avatarRepository.findByStudent_Id(studentId);
 
         String originalFilename = file.getOriginalFilename();
         String nameNewAvatar = "";
@@ -76,7 +77,6 @@ public class AvatarService {
             nameNewAvatar = createNewName(originalFilename, studentId);
         }
         Path pathNewFile = Path.of(avatarsDir, nameNewAvatar);
-
 
 
         if (optionalAvatar.isPresent()) {
@@ -127,41 +127,49 @@ public class AvatarService {
     }
 
     public byte[] createThumbnail(int thumbnailWidth, int thumbnailHeight, MultipartFile imageFile) throws IOException {
-        InputStream originalImageStream = imageFile.getInputStream();
-        BufferedImage originalImage = ImageIO.read(originalImageStream);
+        try (InputStream originalImageStream = imageFile.getInputStream()) {
+            BufferedImage originalImage = ImageIO.read(originalImageStream);
 
-        double originalWidth = originalImage.getWidth();
-        double originalHeight = originalImage.getHeight();
+            if (originalImage == null) {
+                throw new IOException("Невозможно прочитать изображение из MultipartFile. Возможно, файл пуст или поврежден.");
+            }
 
-        double scale = Math.min(thumbnailWidth/originalWidth, thumbnailHeight/originalHeight);
+            double originalWidth = originalImage.getWidth();
+            double originalHeight = originalImage.getHeight();
 
-        int scaleWidth = (int) (originalWidth * scale);
-        int scaleHeight = (int) (originalHeight * scale);
+            double scale = Math.min(thumbnailWidth / originalWidth, thumbnailHeight / originalHeight);
 
-        BufferedImage thumbnail = new BufferedImage(scaleWidth, scaleHeight, BufferedImage.TYPE_INT_ARGB);
+            int scaleWidth = (int) (originalWidth * scale);
+            int scaleHeight = (int) (originalHeight * scale);
 
-        Graphics2D paintingImageObject = thumbnail.createGraphics();
+            if (scaleWidth <= 0) scaleWidth = 1;
+            if (scaleHeight <= 0) scaleHeight = 1;
 
-        paintingImageObject.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        paintingImageObject.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        paintingImageObject.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            BufferedImage thumbnail = new BufferedImage(scaleWidth, scaleHeight, BufferedImage.TYPE_INT_RGB);
 
-        paintingImageObject.drawImage(originalImage, 0, 0, scaleWidth, scaleHeight, null);
-        paintingImageObject.dispose();
+            Graphics2D paintingImageObject = thumbnail.createGraphics();
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(thumbnail, "jpg", baos);
-        return baos.toByteArray();
+            paintingImageObject.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            paintingImageObject.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            paintingImageObject.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            paintingImageObject.drawImage(originalImage, 0, 0, scaleWidth, scaleHeight, null);
+            paintingImageObject.dispose();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(thumbnail, "jpg", baos);
+            return baos.toByteArray();
+        }
     }
 
     public byte[] getAvatarMiniature(Long studentId) {
-        return avatarRepository.findByAvatarId(studentId)
+        return avatarRepository.findByStudent_Id(studentId)
                 .orElseThrow(() -> new StudentNotFoundException("Avatar not found with ID: " + studentId))
                 .getData();
     }
 
     public byte[] getAvatarFile(Long studentId) throws IOException {
-        String filePath = avatarRepository.findByAvatarId(studentId)
+        String filePath = avatarRepository.findByStudent_Id(studentId)
                 .orElseThrow(() -> new StudentNotFoundException("Avatar not found with ID: " + studentId))
                 .getFilePath();
 
@@ -173,14 +181,10 @@ public class AvatarService {
         return Files.readAllBytes(pathToFile);
     }
 
+
     public MediaType getMediaType(Long studentId) {
-        String typeMiniature =  avatarRepository.findByAvatarId(studentId)
+        String typeMiniature = avatarRepository.findByStudent_Id(studentId)
                 .orElseThrow(() -> new AvatarNotFoundException("Student not found with ID: " + studentId)).getMediaType();
         return MediaType.parseMediaType(typeMiniature);
     }
-
-
-
-
-
 }
