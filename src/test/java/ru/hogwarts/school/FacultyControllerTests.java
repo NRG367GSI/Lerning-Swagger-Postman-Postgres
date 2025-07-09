@@ -198,4 +198,63 @@ class FacultyControllerTests {
         assertThat(facultiesByColor).extracting(Faculty::getName).containsExactlyInAnyOrder("Gryffindor", "Another Red Faculty");
         assertThat(facultiesByColor).allMatch(f -> f.getColor().equals("Red"));
     }
+
+    @Test
+    void testGetAllFaculty() {
+        Faculty faculty1 = new Faculty();
+        faculty1.setName("Faculty Alpha");
+        faculty1.setColor("White");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+
+        Faculty faculty2 = new Faculty();
+        faculty2.setName("Faculty Beta");
+        faculty2.setColor("Black");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+
+        Faculty faculty3 = new Faculty();
+        faculty3.setName("Faculty Gamma");
+        faculty3.setColor("Gray");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+
+        ResponseEntity<Faculty[]> response = restTemplate.getForEntity(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/getAllFaculty",
+                Faculty[].class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        List<Faculty> allFaculties = Arrays.asList(response.getBody());
+        assertThat(allFaculties).hasSize(3);
+        assertThat(allFaculties).extracting(Faculty::getName).containsExactlyInAnyOrder("Faculty Alpha", "Faculty Beta", "Faculty Gamma");
+    }
+
+    @Test
+    void testSearchFacultiesByName() {
+        Faculty faculty1 = new Faculty();
+        faculty1.setName("History Department");
+        faculty1.setColor("Brown");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+
+        Faculty faculty2 = new Faculty();
+        faculty2.setName("Science Faculty");
+        faculty2.setColor("Blue");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+
+        Faculty faculty3 = new Faculty();
+        faculty3.setName("Art History Institute");
+        faculty3.setColor("Yellow");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+
+        String url = "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/searchFacultyByName?name=History";
+        ResponseEntity<Faculty[]> response = restTemplate.getForEntity(url, Faculty[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        List<Faculty> foundFaculties = Arrays.asList(response.getBody());
+        assertThat(foundFaculties).hasSize(2);
+        assertThat(foundFaculties).extracting(Faculty::getName).containsExactlyInAnyOrder("History Department", "Art History Institute");
+        assertThat(foundFaculties).allMatch(f -> f.getName().contains("History"));
+    }
+
+
 }
