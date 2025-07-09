@@ -281,7 +281,7 @@ class StudentSchoolApplicationTests {
 
 		Student student3 = new Student();
 		student3.setName("Student3");
-		student3.setAge(18); // Еще один студент того же возраста
+		student3.setAge(18);
 		student3.setFaculty(savedFaculty1);
 		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student3, Student.class);
 
@@ -297,6 +297,154 @@ class StudentSchoolApplicationTests {
 		assertThat(studentsByAge).extracting(Student::getName).containsExactlyInAnyOrder("Student1", "Student3");
 		assertThat(studentsByAge).allMatch(s -> s.getAge() == 18);
 	}
+
+	@Test
+	void testGetStudentsByAgeBetween() {
+		Faculty faculty = new Faculty();
+		faculty.setName("TestFaculty");
+		faculty.setColor("TestColor");
+		ResponseEntity<Faculty> facultyResponse = restTemplate.postForEntity(
+				"http://localhost:" + port + FACULTY_ENDPOINT,
+				faculty,
+				Faculty.class
+		);
+		assertThat(facultyResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Faculty savedFaculty = facultyResponse.getBody();
+		assertThat(savedFaculty).isNotNull();
+
+		Student student1 = new Student();
+		student1.setName("OldStudent");
+		student1.setAge(25);
+		student1.setFaculty(savedFaculty);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student1, Student.class);
+
+		Student student2 = new Student();
+		student2.setName("MidStudent");
+		student2.setAge(18);
+		student2.setFaculty(savedFaculty);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student2, Student.class);
+
+		Student student3 = new Student();
+		student3.setName("YoungStudent");
+		student3.setAge(15);
+		student3.setFaculty(savedFaculty);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student3, Student.class);
+
+		Student student4 = new Student();
+		student4.setName("AnotherMidStudent");
+		student4.setAge(20);
+		student4.setFaculty(savedFaculty);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student4, Student.class);
+
+		String url = "http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/age/between?minAge=17&maxAge=21";
+		ResponseEntity<Student[]> response = restTemplate.getForEntity(url, Student[].class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		List<Student> students = Arrays.asList(response.getBody());
+		assertThat(students).hasSize(2);
+		assertThat(students).extracting(Student::getName).containsExactlyInAnyOrder("MidStudent", "AnotherMidStudent");
+		assertThat(students).allMatch(s -> s.getAge() >= 17 && s.getAge() <= 21);
+	}
+
+	@Test
+	void testGetStudentFaculty() {
+		Faculty createdFaculty = new Faculty();
+		createdFaculty.setName("Gryffindor");
+		createdFaculty.setColor("Red");
+		ResponseEntity<Faculty> facultyResponse = restTemplate.postForEntity(
+				"http://localhost:" + port + FACULTY_ENDPOINT,
+				createdFaculty,
+				Faculty.class
+		);
+		assertThat(facultyResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Faculty savedFaculty = facultyResponse.getBody();
+		assertThat(savedFaculty).isNotNull();
+
+		Student createdStudent = new Student();
+		createdStudent.setName("Harry");
+		createdStudent.setAge(14);
+		createdStudent.setFaculty(savedFaculty);
+		ResponseEntity<Student> studentResponse = restTemplate.postForEntity(
+				"http://localhost:" + port + STUDENT_ENDPOINT,
+				createdStudent,
+				Student.class
+		);
+		assertThat(studentResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Student savedStudent = studentResponse.getBody();
+		assertThat(savedStudent).isNotNull();
+
+		ResponseEntity<Faculty> response = restTemplate.getForEntity(
+				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/" + savedStudent.getId() + "/faculty",
+				Faculty.class
+		);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		Faculty retrievedFaculty = response.getBody();
+		assertThat(retrievedFaculty).isNotNull();
+		assertThat(retrievedFaculty.getFacultyId()).isEqualTo(savedFaculty.getFacultyId());
+		assertThat(retrievedFaculty.getName()).isEqualTo(savedFaculty.getName());
+		assertThat(retrievedFaculty.getColor()).isEqualTo(savedFaculty.getColor());
+	}
+
+
+
+	@Test
+	void testGetAllStudent() {
+		Faculty faculty1 = new Faculty();
+		faculty1.setName("FacultyA");
+		faculty1.setColor("ColorA");
+		ResponseEntity<Faculty> facultyResponse1 = restTemplate.postForEntity(
+				"http://localhost:" + port + FACULTY_ENDPOINT,
+				faculty1,
+				Faculty.class
+		);
+		assertThat(facultyResponse1.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Faculty savedFaculty1 = facultyResponse1.getBody();
+		assertThat(savedFaculty1).isNotNull();
+
+		Faculty faculty2 = new Faculty();
+		faculty2.setName("FacultyB");
+		faculty2.setColor("ColorB");
+		ResponseEntity<Faculty> facultyResponse2 = restTemplate.postForEntity(
+				"http://localhost:" + port + FACULTY_ENDPOINT,
+				faculty2,
+				Faculty.class
+		);
+		assertThat(facultyResponse2.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Faculty savedFaculty2 = facultyResponse2.getBody();
+		assertThat(savedFaculty2).isNotNull();
+
+		Student student1 = new Student();
+		student1.setName("Student A");
+		student1.setAge(10);
+		student1.setFaculty(savedFaculty1);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student1, Student.class);
+
+		Student student2 = new Student();
+		student2.setName("Student B");
+		student2.setAge(12);
+		student2.setFaculty(savedFaculty2);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student2, Student.class);
+
+		Student student3 = new Student();
+		student3.setName("Student C");
+		student3.setAge(11);
+		student3.setFaculty(savedFaculty1);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student3, Student.class);
+
+		ResponseEntity<Student[]> response = restTemplate.getForEntity(
+				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/getFullStudent",
+				Student[].class
+		);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		List<Student> allStudents = Arrays.asList(response.getBody());
+		assertThat(allStudents).hasSize(3);
+		assertThat(allStudents).extracting(Student::getName).containsExactlyInAnyOrder("Student A", "Student B", "Student C");
+	}
+
 
 
 
