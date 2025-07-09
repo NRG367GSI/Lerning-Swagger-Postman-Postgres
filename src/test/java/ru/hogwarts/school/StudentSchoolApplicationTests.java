@@ -387,8 +387,6 @@ class StudentSchoolApplicationTests {
 		assertThat(retrievedFaculty.getColor()).isEqualTo(savedFaculty.getColor());
 	}
 
-
-
 	@Test
 	void testGetAllStudent() {
 		Faculty faculty1 = new Faculty();
@@ -443,6 +441,58 @@ class StudentSchoolApplicationTests {
 		List<Student> allStudents = Arrays.asList(response.getBody());
 		assertThat(allStudents).hasSize(3);
 		assertThat(allStudents).extracting(Student::getName).containsExactlyInAnyOrder("Student A", "Student B", "Student C");
+	}
+
+	@Test
+	void testGetAllStudentId() {
+		Faculty faculty1 = new Faculty();
+		faculty1.setName("FacultyID1");
+		faculty1.setColor("ColorID1");
+		ResponseEntity<Faculty> facultyResponse1 = restTemplate.postForEntity(
+				"http://localhost:" + port + FACULTY_ENDPOINT,
+				faculty1,
+				Faculty.class
+		);
+		assertThat(facultyResponse1.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Faculty savedFaculty1 = facultyResponse1.getBody();
+		assertThat(savedFaculty1).isNotNull();
+
+		Student student1 = new Student();
+		student1.setName("Student ID1");
+		student1.setAge(10);
+		student1.setFaculty(savedFaculty1);
+		ResponseEntity<Student> studentResponse1 = restTemplate.postForEntity(
+				"http://localhost:" + port + STUDENT_ENDPOINT,
+				student1,
+				Student.class
+		);
+		assertThat(studentResponse1.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Student createdStudent1 = studentResponse1.getBody();
+		assertThat(createdStudent1).isNotNull();
+
+		Student student2 = new Student();
+		student2.setName("Student ID2");
+		student2.setAge(12);
+		student2.setFaculty(savedFaculty1); // Используем тот же факультет
+		ResponseEntity<Student> studentResponse2 = restTemplate.postForEntity(
+				"http://localhost:" + port + STUDENT_ENDPOINT,
+				student2,
+				Student.class
+		);
+		assertThat(studentResponse2.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Student createdStudent2 = studentResponse2.getBody();
+		assertThat(createdStudent2).isNotNull();
+
+		ResponseEntity<Long[]> response = restTemplate.getForEntity(
+				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/getFullStudentId",
+				Long[].class
+		);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		List<Long> allStudentIds = Arrays.asList(response.getBody());
+		assertThat(allStudentIds).hasSize(2);
+		assertThat(allStudentIds).containsExactlyInAnyOrder(createdStudent1.getId(), createdStudent2.getId());
 	}
 
 
