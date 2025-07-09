@@ -190,7 +190,6 @@ class FacultyControllerTests {
                 Faculty[].class
         );
 
-        // Assert: Проверяем результат
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         List<Faculty> facultiesByColor = Arrays.asList(response.getBody());
@@ -254,6 +253,34 @@ class FacultyControllerTests {
         assertThat(foundFaculties).hasSize(2);
         assertThat(foundFaculties).extracting(Faculty::getName).containsExactlyInAnyOrder("History Department", "Art History Institute");
         assertThat(foundFaculties).allMatch(f -> f.getName().contains("History"));
+    }
+
+    @Test
+    void testSearchFacultiesByColor() {
+        Faculty faculty1 = new Faculty();
+        faculty1.setName("Blue Faculty");
+        faculty1.setColor("Blue");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+
+        Faculty faculty2 = new Faculty();
+        faculty2.setName("Green Faculty");
+        faculty2.setColor("Green");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+
+        Faculty faculty3 = new Faculty();
+        faculty3.setName("Another Blue Faculty");
+        faculty3.setColor("Blue");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+
+        String url = "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/searchFacultyByColor?color=Blue";
+        ResponseEntity<Faculty[]> response = restTemplate.getForEntity(url, Faculty[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        List<Faculty> foundFaculties = Arrays.asList(response.getBody());
+        assertThat(foundFaculties).hasSize(2);
+        assertThat(foundFaculties).extracting(Faculty::getName).containsExactlyInAnyOrder("Blue Faculty", "Another Blue Faculty");
+        assertThat(foundFaculties).allMatch(f -> f.getColor().equals("Blue"));
     }
 
 
