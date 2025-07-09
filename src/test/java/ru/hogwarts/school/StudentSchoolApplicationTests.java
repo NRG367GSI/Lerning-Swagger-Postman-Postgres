@@ -15,7 +15,10 @@ import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
@@ -237,6 +240,64 @@ class StudentSchoolApplicationTests {
 		);
 		assertThat(verifyDeleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 	}
+
+	@Test
+	void testGetStudentsByAge() {
+		Faculty faculty1 = new Faculty();
+		faculty1.setName("FacultyA");
+		faculty1.setColor("ColorA");
+		ResponseEntity<Faculty> facultyResponse1 = restTemplate.postForEntity(
+				"http://localhost:" + port + FACULTY_ENDPOINT,
+				faculty1,
+				Faculty.class
+		);
+		assertThat(facultyResponse1.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Faculty savedFaculty1 = facultyResponse1.getBody();
+		assertThat(savedFaculty1).isNotNull();
+
+		Faculty faculty2 = new Faculty();
+		faculty2.setName("FacultyB");
+		faculty2.setColor("ColorB");
+		ResponseEntity<Faculty> facultyResponse2 = restTemplate.postForEntity(
+				"http://localhost:" + port + FACULTY_ENDPOINT,
+				faculty2,
+				Faculty.class
+		);
+		assertThat(facultyResponse2.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		Faculty savedFaculty2 = facultyResponse2.getBody();
+		assertThat(savedFaculty2).isNotNull();
+
+		Student student1 = new Student();
+		student1.setName("Student1");
+		student1.setAge(18);
+		student1.setFaculty(savedFaculty1);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student1, Student.class);
+
+		Student student2 = new Student();
+		student2.setName("Student2");
+		student2.setAge(20);
+		student2.setFaculty(savedFaculty2);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student2, Student.class);
+
+		Student student3 = new Student();
+		student3.setName("Student3");
+		student3.setAge(18); // Еще один студент того же возраста
+		student3.setFaculty(savedFaculty1);
+		restTemplate.postForEntity("http://localhost:" + port + STUDENT_ENDPOINT, student3, Student.class);
+
+		ResponseEntity<Student[]> response = restTemplate.getForEntity(
+				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/getStudentsByAge/18",
+				Student[].class
+		);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotNull();
+		List<Student> studentsByAge = Arrays.asList(response.getBody());
+		assertThat(studentsByAge).hasSize(2); // Ожидаем 2 студентов
+		assertThat(studentsByAge).extracting(Student::getName).containsExactlyInAnyOrder("Student1", "Student3");
+		assertThat(studentsByAge).allMatch(s -> s.getAge() == 18);
+	}
+
 
 
 }
