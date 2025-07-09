@@ -140,4 +140,28 @@ class FacultyControllerTests {
 
         assertThat(updateFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    void testDeleteFaculty() {
+        Faculty facultyToCreate = new Faculty();
+        facultyToCreate.setName("Faculty to Delete");
+        facultyToCreate.setColor("Black");
+        ResponseEntity<Faculty> createFacultyResponse = restTemplate.postForEntity(
+                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                facultyToCreate,
+                Faculty.class
+        );
+        assertThat(createFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Faculty createdFaculty = createFacultyResponse.getBody();
+        assertThat(createdFaculty).isNotNull();
+        Long facultyId = createdFaculty.getFacultyId();
+
+        restTemplate.delete("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/deleteFaculty/" + facultyId);
+
+        ResponseEntity<Faculty> verifyDeleteResponse = restTemplate.getForEntity(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/getFaculty/" + facultyId,
+                Faculty.class
+        );
+        assertThat(verifyDeleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
 }
