@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import ru.hogwarts.school.model.Faculty;
 
+import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
@@ -281,6 +282,58 @@ class FacultyControllerTests {
         assertThat(foundFaculties).hasSize(2);
         assertThat(foundFaculties).extracting(Faculty::getName).containsExactlyInAnyOrder("Blue Faculty", "Another Blue Faculty");
         assertThat(foundFaculties).allMatch(f -> f.getColor().equals("Blue"));
+    }
+
+    @Test
+    void testGetFacultyStudents() {
+        Faculty createdFaculty = new Faculty();
+        createdFaculty.setName("School of Witchcraft");
+        createdFaculty.setColor("Brown");
+        ResponseEntity<Faculty> facultyResponse = restTemplate.postForEntity(
+                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                createdFaculty,
+                Faculty.class
+        );
+        assertThat(facultyResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Faculty savedFaculty = facultyResponse.getBody();
+        assertThat(savedFaculty).isNotNull();
+
+        Student student1 = new Student();
+        student1.setName("Student A");
+        student1.setAge(15);
+        student1.setFaculty(savedFaculty);
+        ResponseEntity<Student> studentResponse1 = restTemplate.postForEntity(
+                "http://localhost:" + port + STUDENT_CREATE_ENDPOINT,
+                student1,
+                Student.class
+        );
+        assertThat(studentResponse1.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(studentResponse1.getBody()).isNotNull();
+
+
+        Student student2 = new Student();
+        student2.setName("Student B");
+        student2.setAge(16);
+        student2.setFaculty(savedFaculty);
+        ResponseEntity<Student> studentResponse2 = restTemplate.postForEntity(
+                "http://localhost:" + port + STUDENT_CREATE_ENDPOINT,
+                student2,
+                Student.class
+        );
+        assertThat(studentResponse2.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(studentResponse2.getBody()).isNotNull();
+
+        ResponseEntity<Student[]> response = restTemplate.getForEntity(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/" + savedFaculty.getFacultyId() + "/students",
+                Student[].class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        List<Student> facultyStudents = Arrays.asList(response.getBody());
+        assertThat(facultyStudents).hasSize(2);
+        assertThat(facultyStudents).extracting(Student::getName).containsExactlyInAnyOrder("Student A", "Student B");
+        assertThat(facultyStudents).allMatch(s -> s.getFaculty().getFacultyId().equals(savedFaculty.getFacultyId()));
     }
 
 
