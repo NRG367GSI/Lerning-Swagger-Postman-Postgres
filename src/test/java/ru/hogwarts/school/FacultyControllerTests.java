@@ -18,7 +18,10 @@ import ru.hogwarts.school.repository.StudentRepository;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -163,5 +166,36 @@ class FacultyControllerTests {
                 Faculty.class
         );
         assertThat(verifyDeleteResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void testGetFacultysByColor() {
+        Faculty faculty1 = new Faculty();
+        faculty1.setName("Gryffindor");
+        faculty1.setColor("Red");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+
+        Faculty faculty2 = new Faculty();
+        faculty2.setName("Slytherin");
+        faculty2.setColor("Green");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+
+        Faculty faculty3 = new Faculty();
+        faculty3.setName("Another Red Faculty");
+        faculty3.setColor("Red");
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+
+        ResponseEntity<Faculty[]> response = restTemplate.getForEntity(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/color/Red",
+                Faculty[].class
+        );
+
+        // Assert: Проверяем результат
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        List<Faculty> facultiesByColor = Arrays.asList(response.getBody());
+        assertThat(facultiesByColor).hasSize(2); // Ожидаем 2 факультета красного цвета
+        assertThat(facultiesByColor).extracting(Faculty::getName).containsExactlyInAnyOrder("Gryffindor", "Another Red Faculty");
+        assertThat(facultiesByColor).allMatch(f -> f.getColor().equals("Red"));
     }
 }
