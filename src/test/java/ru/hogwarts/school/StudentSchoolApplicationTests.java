@@ -494,8 +494,4 @@ class StudentSchoolApplicationTests {
 		assertThat(allStudentIds).hasSize(2);
 		assertThat(allStudentIds).containsExactlyInAnyOrder(createdStudent1.getId(), createdStudent2.getId());
 	}
-
-
-
-
 }

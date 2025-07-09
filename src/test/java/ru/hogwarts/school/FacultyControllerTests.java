@@ -1,0 +1,143 @@
+package ru.hogwarts.school;
+
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import ru.hogwarts.school.model.Faculty;
+
+import ru.hogwarts.school.repository.FacultyRepository;
+import ru.hogwarts.school.repository.StudentRepository;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Transactional
+class FacultyControllerTests {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Autowired
+    private FacultyRepository facultyRepository;
+
+    @Autowired
+    private StudentRepository studentRepository;
+
+    private static final String FACULTY_CREATE_ENDPOINT = "/faculty/createdFaculty";
+    private static final String FACULTY_BASE_ENDPOINT = "/faculty";
+
+
+    private static final String STUDENT_CREATE_ENDPOINT = "/student/createdStudent";
+    private static final String STUDENT_BASE_ENDPOINT = "/student";
+
+    @Test
+    void testGetFacultyById() {
+        Faculty facultyToCreate = new Faculty();
+        facultyToCreate.setName("Hogwarts School");
+        facultyToCreate.setColor("Grey");
+        ResponseEntity<Faculty> createFacultyResponse = restTemplate.postForEntity(
+                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                facultyToCreate,
+                Faculty.class
+        );
+        assertThat(createFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Faculty createdFaculty = createFacultyResponse.getBody();
+        assertThat(createdFaculty).isNotNull();
+        Long facultyId = createdFaculty.getFacultyId();
+
+        ResponseEntity<Faculty> getFacultyResponse = restTemplate.getForEntity(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/getFaculty/" + facultyId,
+                Faculty.class
+        );
+
+        assertThat(getFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Faculty retrievedFaculty = getFacultyResponse.getBody();
+        assertThat(retrievedFaculty).isNotNull();
+        assertThat(retrievedFaculty.getFacultyId()).isEqualTo(facultyId);
+        assertThat(retrievedFaculty.getName()).isEqualTo("Hogwarts School");
+        assertThat(retrievedFaculty.getColor()).isEqualTo("Grey");
+    }
+
+    @Test
+    void testGetFacultyByIdNotFound() {
+        ResponseEntity<Faculty> getFacultyResponse = restTemplate.getForEntity(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/getFaculty/99999", // ID, которого точно нет
+                Faculty.class
+        );
+
+        assertThat(getFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+
+    @Test
+    void testUpdateFaculty() {
+        Faculty facultyToCreate = new Faculty();
+        facultyToCreate.setName("Initial Faculty Name");
+        facultyToCreate.setColor("Initial Color");
+        ResponseEntity<Faculty> createFacultyResponse = restTemplate.postForEntity(
+                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                facultyToCreate,
+                Faculty.class
+        );
+        assertThat(createFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        Faculty createdFaculty = createFacultyResponse.getBody();
+        assertThat(createdFaculty).isNotNull();
+        Long facultyId = createdFaculty.getFacultyId();
+
+        Faculty facultyToUpdate = new Faculty();
+        facultyToUpdate.setName("Updated Faculty Name");
+        facultyToUpdate.setColor("Updated Color");
+
+        ResponseEntity<Faculty> updateFacultyResponse = restTemplate.exchange(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/" + facultyId,
+                HttpMethod.PUT,
+                new HttpEntity<>(facultyToUpdate),
+                Faculty.class
+        );
+
+        assertThat(updateFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Faculty updatedFaculty = updateFacultyResponse.getBody();
+        assertThat(updatedFaculty).isNotNull();
+        assertThat(updatedFaculty.getFacultyId()).isEqualTo(facultyId);
+        assertThat(updatedFaculty.getName()).isEqualTo("Updated Faculty Name");
+        assertThat(updatedFaculty.getColor()).isEqualTo("Updated Color");
+
+        ResponseEntity<Faculty> verifyFacultyResponse = restTemplate.getForEntity(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/getFaculty/" + facultyId,
+                Faculty.class
+        );
+        assertThat(verifyFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(verifyFacultyResponse.getBody().getName()).isEqualTo("Updated Faculty Name");
+        assertThat(verifyFacultyResponse.getBody().getColor()).isEqualTo("Updated Color");
+    }
+
+    @Test
+    void testUpdateFacultyNotFound() {
+        Faculty facultyToUpdate = new Faculty();
+        facultyToUpdate.setName("NonExistent Faculty");
+        facultyToUpdate.setColor("NonExistent Color");
+
+        ResponseEntity<Faculty> updateFacultyResponse = restTemplate.exchange(
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/99999",
+                HttpMethod.PUT,
+                new HttpEntity<>(facultyToUpdate),
+                Faculty.class
+        );
+
+        assertThat(updateFacultyResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+}
