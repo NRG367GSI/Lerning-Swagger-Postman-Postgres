@@ -24,7 +24,7 @@ public class FacultyController {
     @PostMapping("/createdFaculty")
     public ResponseEntity<Faculty> createdFaculty(@RequestBody Faculty faculty) {
         Faculty createdFaculty = facultyService.createFaculty(faculty);
-        return ResponseEntity.ok(createdFaculty);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdFaculty);
     }
 
     @GetMapping("/getFaculty/{facultyId}")
