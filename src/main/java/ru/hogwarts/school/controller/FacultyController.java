@@ -8,6 +8,7 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.FacultyService;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,26 +25,27 @@ public class FacultyController {
     @PostMapping("/createdFaculty")
     public ResponseEntity<Faculty> createdFaculty(@RequestBody Faculty faculty) {
         Faculty createdFaculty = facultyService.createFaculty(faculty);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdFaculty);
+        return ResponseEntity.created(URI.create("/faculty/" + createdFaculty.getFacultyId()))
+                .body(createdFaculty);
     }
 
     @GetMapping("/getFaculty/{facultyId}")
-    public ResponseEntity<Faculty> getFaculty(@PathVariable Long facultyId) { // Добавляем @PathVariable
+    public ResponseEntity<Faculty> getFaculty(@PathVariable Long facultyId) {
         Faculty faculty = facultyService.getFaculty(facultyId);
         if (faculty == null) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok().build();
         }
         return ResponseEntity.ok(faculty);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/updateFaculty/{id}")
     public ResponseEntity<Faculty> updateFaculty(@PathVariable Long id, @RequestBody Faculty faculty) {
         Faculty updatedFaculty = facultyService.updateFaculty(id, faculty);
         return ResponseEntity.ok(updatedFaculty);
     }
 
     @DeleteMapping("/deleteFaculty/{facultyId}") // Изменяем путь для ясности
-    public ResponseEntity<Faculty> deleteFaculty(@PathVariable Long facultyId) { // Добавляем @PathVariable
+    public ResponseEntity<Void> deleteFaculty(@PathVariable Long facultyId) { // Добавляем @PathVariable
         facultyService.deleteFaculty(facultyId);
         return ResponseEntity.noContent().build();
     }

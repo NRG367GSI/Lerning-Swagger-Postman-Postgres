@@ -1,5 +1,4 @@
 package ru.hogwarts.school;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
-class StudentSchoolApplicationTests {
+class StudentControllerRestTemplateTest {
 
 	@LocalServerPort
 	private int port;
@@ -36,8 +35,8 @@ class StudentSchoolApplicationTests {
 	@Autowired
 	private StudentRepository studentRepository;
 
-	private static final String FACULTY_ENDPOINT = "/faculty/createdFaculty";
-	private static final String STUDENT_ENDPOINT = "/student/createdStudent";
+	private static final String FACULTY_ENDPOINT = "/faculty";
+	private static final String STUDENT_ENDPOINT = "/student";
 
 
 	@Test
@@ -50,7 +49,7 @@ class StudentSchoolApplicationTests {
 		facultyToCreate.setColor("Red");
 
 		ResponseEntity<Faculty> facultyResponse = this.restTemplate.postForEntity(
-				"http://localhost:" + port + FACULTY_ENDPOINT,
+				"http://localhost:" + port + FACULTY_ENDPOINT + "/createdFaculty",
 				facultyToCreate,
 				Faculty.class
 		);
@@ -71,7 +70,7 @@ class StudentSchoolApplicationTests {
 		student.setFaculty(facultyForStudentRequest);
 
 		ResponseEntity<Student> studentResponse = this.restTemplate.postForEntity(
-				"http://localhost:" + port + STUDENT_ENDPOINT,
+				"http://localhost:" + port + STUDENT_ENDPOINT + "/createdStudent",
 				student,
 				Student.class
 		);
@@ -93,7 +92,7 @@ class StudentSchoolApplicationTests {
 		facultyToCreate.setName("Hufflepuff");
 		facultyToCreate.setColor("Yellow");
 		ResponseEntity<Faculty> facultyResponse = restTemplate.postForEntity(
-				"http://localhost:" + port + FACULTY_ENDPOINT,
+				"http://localhost:" + port + FACULTY_ENDPOINT + "/createdFaculty",
 				facultyToCreate,
 				Faculty.class
 		);
@@ -107,7 +106,7 @@ class StudentSchoolApplicationTests {
 		studentToCreate.setFaculty(createdFaculty);
 
 		ResponseEntity<Student> createStudentResponse = restTemplate.postForEntity(
-				"http://localhost:" + port + STUDENT_ENDPOINT, // Используем STUDENT_ENDPOINT как есть
+				"http://localhost:" + port + STUDENT_ENDPOINT + "/createdStudent",
 				studentToCreate,
 				Student.class
 		);
@@ -117,7 +116,7 @@ class StudentSchoolApplicationTests {
 		Long studentId = createdStudent.getId();
 
 		ResponseEntity<Student> getStudentResponse = restTemplate.getForEntity(
-				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/getStudent/" + studentId,
+				"http://localhost:" + port + STUDENT_ENDPOINT + "/getStudent/" + studentId,
 				Student.class
 		);
 
@@ -137,7 +136,7 @@ class StudentSchoolApplicationTests {
 		initialFaculty.setName("Ravenclaw");
 		initialFaculty.setColor("Blue");
 		ResponseEntity<Faculty> initialFacultyResponse = restTemplate.postForEntity(
-				"http://localhost:" + port + FACULTY_ENDPOINT,
+				"http://localhost:" + port + FACULTY_ENDPOINT + "/createdFaculty",
 				initialFaculty,
 				Faculty.class
 		);
@@ -151,7 +150,7 @@ class StudentSchoolApplicationTests {
 		studentToCreate.setFaculty(createdInitialFaculty);
 
 		ResponseEntity<Student> createStudentResponse = restTemplate.postForEntity(
-				"http://localhost:" + port + STUDENT_ENDPOINT,
+				"http://localhost:" + port + STUDENT_ENDPOINT + "/createdStudent",
 				studentToCreate,
 				Student.class
 		);
@@ -164,7 +163,7 @@ class StudentSchoolApplicationTests {
 		newFaculty.setName("Slytherin");
 		newFaculty.setColor("Green");
 		ResponseEntity<Faculty> newFacultyResponse = restTemplate.postForEntity(
-				"http://localhost:" + port + FACULTY_ENDPOINT,
+				"http://localhost:" + port + FACULTY_ENDPOINT + "/createdFaculty",
 				newFaculty,
 				Faculty.class
 		);
@@ -173,28 +172,28 @@ class StudentSchoolApplicationTests {
 		assertThat(createdNewFaculty).isNotNull();
 
 		Student studentToUpdate = new Student();
-		studentToUpdate.setName("Ronald Weasley"); // Новое имя
-		studentToUpdate.setAge(18); // Новый возраст
-		studentToUpdate.setFaculty(createdNewFaculty); // Новый факультет
+		studentToUpdate.setName("Ronald Weasley");
+		studentToUpdate.setAge(18);
+		studentToUpdate.setFaculty(createdNewFaculty);
 
 		ResponseEntity<Student> updateStudentResponse = restTemplate.exchange(
-				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/updateStudent/" + studentId,
+				"http://localhost:" + port + STUDENT_ENDPOINT + "/updateStudent/" + studentId,
 				HttpMethod.PUT,
-				new HttpEntity<>(studentToUpdate), // Тело запроса
+				new HttpEntity<>(studentToUpdate),
 				Student.class
 		);
 
-		assertThat(updateStudentResponse.getStatusCode()).isEqualTo(HttpStatus.OK); // Ожидаем 200 OK
+		assertThat(updateStudentResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
 		Student updatedStudent = updateStudentResponse.getBody();
 		assertThat(updatedStudent).isNotNull();
-		assertThat(updatedStudent.getId()).isEqualTo(studentId); // ID должен остаться прежним
+		assertThat(updatedStudent.getId()).isEqualTo(studentId);
 		assertThat(updatedStudent.getName()).isEqualTo("Ronald Weasley");
 		assertThat(updatedStudent.getAge()).isEqualTo(18);
 		assertThat(updatedStudent.getFaculty()).isNotNull();
 		assertThat(updatedStudent.getFaculty().getFacultyId()).isEqualTo(createdNewFaculty.getFacultyId());
 
 		ResponseEntity<Student> verifyStudentResponse = restTemplate.getForEntity(
-				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/getStudent/" + studentId,
+				"http://localhost:" + port + STUDENT_ENDPOINT + "/getStudent/" + studentId,
 				Student.class
 		);
 		assertThat(verifyStudentResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -484,7 +483,7 @@ class StudentSchoolApplicationTests {
 		assertThat(createdStudent2).isNotNull();
 
 		ResponseEntity<Long[]> response = restTemplate.getForEntity(
-				"http://localhost:" + port + STUDENT_ENDPOINT.replace("/createdStudent", "") + "/getFullStudentId",
+				"http://localhost:" + port + STUDENT_ENDPOINT + "/getFullStudentId",
 				Long[].class
 		);
 

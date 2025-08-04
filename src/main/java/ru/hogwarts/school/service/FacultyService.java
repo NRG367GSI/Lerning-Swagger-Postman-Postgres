@@ -1,8 +1,10 @@
 package ru.hogwarts.school.service;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.hogwarts.school.exception.FacultyAlreadyExistsException;
 import ru.hogwarts.school.exception.FacultyNotFoundException;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
@@ -21,6 +23,11 @@ public class FacultyService {
     }
 
     public Faculty createFaculty(Faculty faculty) {
+        if (faculty.getFacultyId() != null && facultyRepository.findById(faculty.getFacultyId()).isPresent()) {
+            throw new FacultyAlreadyExistsException(
+                    "Faculty with ID " + faculty.getFacultyId() + " already exists."
+            );
+        }
         return facultyRepository.save(faculty);
     }
 
@@ -39,7 +46,11 @@ public class FacultyService {
     }
 
     public void deleteFaculty(Long facultyId) {
-        facultyRepository.deleteById(facultyId);
+        if (facultyRepository.existsById(facultyId)) {
+            facultyRepository.deleteById(facultyId);
+        } else {
+            throw new FacultyNotFoundException("Факультет с ID " + facultyId + " не найден для обновления");
+        }
     }
 
     public List<Faculty> getFacultysByColor(String color) {
@@ -55,12 +66,6 @@ public class FacultyService {
     }
 
     public Optional<List<Student>> getStudentsByFacultyId(Long facultyId) {
-        return facultyRepository.findById(facultyId)
-                .map(Faculty::getStudents);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<List<Student>> getFacultyStudents(Long facultyId) {
         return facultyRepository.findById(facultyId)
                 .map(Faculty::getStudents);
     }

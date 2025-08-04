@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Transactional
-class FacultyControllerTests {
+class FacultyControllerRestTemplateTest {
 
     @LocalServerPort
     private int port;
@@ -41,11 +41,8 @@ class FacultyControllerTests {
     @Autowired
     private StudentRepository studentRepository;
 
-    private static final String FACULTY_CREATE_ENDPOINT = "/faculty/createdFaculty";
     private static final String FACULTY_BASE_ENDPOINT = "/faculty";
 
-
-    private static final String STUDENT_CREATE_ENDPOINT = "/student/createdStudent";
     private static final String STUDENT_BASE_ENDPOINT = "/student";
 
     @Test
@@ -54,7 +51,7 @@ class FacultyControllerTests {
         facultyToCreate.setName("Hogwarts School");
         facultyToCreate.setColor("Grey");
         ResponseEntity<Faculty> createFacultyResponse = restTemplate.postForEntity(
-                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty",
                 facultyToCreate,
                 Faculty.class
         );
@@ -93,7 +90,7 @@ class FacultyControllerTests {
         facultyToCreate.setName("Initial Faculty Name");
         facultyToCreate.setColor("Initial Color");
         ResponseEntity<Faculty> createFacultyResponse = restTemplate.postForEntity(
-                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty",
                 facultyToCreate,
                 Faculty.class
         );
@@ -151,7 +148,7 @@ class FacultyControllerTests {
         facultyToCreate.setName("Faculty to Delete");
         facultyToCreate.setColor("Black");
         ResponseEntity<Faculty> createFacultyResponse = restTemplate.postForEntity(
-                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty",
                 facultyToCreate,
                 Faculty.class
         );
@@ -174,17 +171,17 @@ class FacultyControllerTests {
         Faculty faculty1 = new Faculty();
         faculty1.setName("Gryffindor");
         faculty1.setColor("Red");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty1, Faculty.class);
 
         Faculty faculty2 = new Faculty();
         faculty2.setName("Slytherin");
         faculty2.setColor("Green");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty2, Faculty.class);
 
         Faculty faculty3 = new Faculty();
         faculty3.setName("Another Red Faculty");
         faculty3.setColor("Red");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty3, Faculty.class);
 
         ResponseEntity<Faculty[]> response = restTemplate.getForEntity(
                 "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/color/Red",
@@ -204,17 +201,17 @@ class FacultyControllerTests {
         Faculty faculty1 = new Faculty();
         faculty1.setName("Faculty Alpha");
         faculty1.setColor("White");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty1, Faculty.class);
 
         Faculty faculty2 = new Faculty();
         faculty2.setName("Faculty Beta");
         faculty2.setColor("Black");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty2, Faculty.class);
 
         Faculty faculty3 = new Faculty();
         faculty3.setName("Faculty Gamma");
         faculty3.setColor("Gray");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty3, Faculty.class);
 
         ResponseEntity<Faculty[]> response = restTemplate.getForEntity(
                 "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/getAllFaculty",
@@ -233,17 +230,17 @@ class FacultyControllerTests {
         Faculty faculty1 = new Faculty();
         faculty1.setName("History Department");
         faculty1.setColor("Brown");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty1, Faculty.class);
 
         Faculty faculty2 = new Faculty();
         faculty2.setName("Science Faculty");
         faculty2.setColor("Blue");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty2, Faculty.class);
 
         Faculty faculty3 = new Faculty();
         faculty3.setName("Art History Institute");
         faculty3.setColor("Yellow");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + STUDENT_BASE_ENDPOINT + "/createdStudent", faculty3, Faculty.class);
 
         String url = "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/searchFacultyByName?name=History";
         ResponseEntity<Faculty[]> response = restTemplate.getForEntity(url, Faculty[].class);
@@ -261,17 +258,17 @@ class FacultyControllerTests {
         Faculty faculty1 = new Faculty();
         faculty1.setName("Blue Faculty");
         faculty1.setColor("Blue");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty1, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty1, Faculty.class);
 
         Faculty faculty2 = new Faculty();
         faculty2.setName("Green Faculty");
         faculty2.setColor("Green");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty2, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty2, Faculty.class);
 
         Faculty faculty3 = new Faculty();
         faculty3.setName("Another Blue Faculty");
         faculty3.setColor("Blue");
-        restTemplate.postForEntity("http://localhost:" + port + FACULTY_CREATE_ENDPOINT, faculty3, Faculty.class);
+        restTemplate.postForEntity("http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty", faculty3, Faculty.class);
 
         String url = "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/searchFacultyByColor?color=Blue";
         ResponseEntity<Faculty[]> response = restTemplate.getForEntity(url, Faculty[].class);
@@ -290,7 +287,7 @@ class FacultyControllerTests {
         createdFaculty.setName("School of Witchcraft");
         createdFaculty.setColor("Brown");
         ResponseEntity<Faculty> facultyResponse = restTemplate.postForEntity(
-                "http://localhost:" + port + FACULTY_CREATE_ENDPOINT,
+                "http://localhost:" + port + FACULTY_BASE_ENDPOINT + "/createdFaculty",
                 createdFaculty,
                 Faculty.class
         );
@@ -303,7 +300,7 @@ class FacultyControllerTests {
         student1.setAge(15);
         student1.setFaculty(savedFaculty);
         ResponseEntity<Student> studentResponse1 = restTemplate.postForEntity(
-                "http://localhost:" + port + STUDENT_CREATE_ENDPOINT,
+                "http://localhost:" + port + STUDENT_BASE_ENDPOINT + "/createdStudent",
                 student1,
                 Student.class
         );
@@ -316,7 +313,7 @@ class FacultyControllerTests {
         student2.setAge(16);
         student2.setFaculty(savedFaculty);
         ResponseEntity<Student> studentResponse2 = restTemplate.postForEntity(
-                "http://localhost:" + port + STUDENT_CREATE_ENDPOINT,
+                "http://localhost:" + port + STUDENT_BASE_ENDPOINT + "/createdStudent",
                 student2,
                 Student.class
         );
