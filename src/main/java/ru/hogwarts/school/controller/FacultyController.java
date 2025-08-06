@@ -44,8 +44,8 @@ public class FacultyController {
         return ResponseEntity.ok(updatedFaculty);
     }
 
-    @DeleteMapping("/deleteFaculty/{facultyId}") // Изменяем путь для ясности
-    public ResponseEntity<Void> deleteFaculty(@PathVariable Long facultyId) { // Добавляем @PathVariable
+    @DeleteMapping("/deleteFaculty/{facultyId}")
+    public ResponseEntity<Void> deleteFaculty(@PathVariable Long facultyId) {
         facultyService.deleteFaculty(facultyId);
         return ResponseEntity.noContent().build();
     }
@@ -67,14 +67,12 @@ public class FacultyController {
 
     @GetMapping("/searchFacultyByColor")
     public ResponseEntity<List<Faculty>> searchFacultiesByColor(@RequestParam String color) {
-        // Здесь можно использовать getFacultysByColor, так как это дубликат
         return ResponseEntity.ok(facultyService.getFacultysByColor(color));
     }
 
     @GetMapping("/{facultyId}/students")
     public ResponseEntity<List<Student>> getFacultyStudents(@PathVariable Long facultyId) {
-        Optional<List<Student>> students = facultyService.getStudentsByFacultyId(facultyId);
-        return students.map(studentList -> new ResponseEntity<>(studentList, HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        List<Student> students = facultyService.getStudentsByFacultyId(facultyId);
+        return ResponseEntity.ok(students);
     }
 }

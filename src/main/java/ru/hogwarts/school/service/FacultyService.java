@@ -10,6 +10,8 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,8 +67,8 @@ public class FacultyService {
         return facultyRepository.findByNameContainingIgnoreCase(name);
     }
 
-    public Optional<List<Student>> getStudentsByFacultyId(Long facultyId) {
+    public List<Student> getStudentsByFacultyId(Long facultyId) {
         return facultyRepository.findById(facultyId)
-                .map(Faculty::getStudents);
+                .map(Faculty::getStudents).orElse(Collections.emptyList());
     }
 }
